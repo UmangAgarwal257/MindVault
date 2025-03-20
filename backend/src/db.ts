@@ -13,7 +13,7 @@ const tagSchema = new Schema({
 
 const contentSchema = new Schema({
     link : {type : String , required : true},
-    type : {type : String , required : true},
+    type : {type : String },
     title : {type : String , required : true},
     tags : [{type : ObjectId , ref : 'Tag'}],
     userId : {type : ObjectId , ref : "User", required : true}

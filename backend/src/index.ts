@@ -1,10 +1,11 @@
 import express , {Request , Response} from "express"
 import {z} from "zod"
-import { UserModel } from "./db";
+import { ContentModel, UserModel } from "./db";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import mongoose from "mongoose";
+import { userMiddleware } from "./middleware";
 
 dotenv.config({ path: __dirname + "/../.env" });
 const app = express();
@@ -49,7 +50,6 @@ app.post("/api/v1/signup", async (req : Request , res : Response) => {
       message: "You are signed up",
     });
   } catch (error) {
-    console.log(error)
     res.status(500).json({
       message: "Error during signup",
     });
@@ -91,12 +91,35 @@ app.post("/api/v1/signin" ,async (req : Request , res : Response) => {
   }
 });
 
-app.post("/api/v1/content" , (req : Request , res : Response) => {
-  res.send("Hello World");
+app.post("/api/v1/content" , userMiddleware , async (req  , res)  => {
+  const {link , title } = req.body;
+
+  await ContentModel.create({
+    link,
+    title,
+    //@ts-ignore
+    userId : req.userId,
+    tags : []
+  })
+
+  res.json({
+    message : "Content added"
+  })
+
 });
 
 app.get("/api/v1/content" , (req : Request , res : Response) => {
-  res.send("Hello World");
+  //@ts-ignore 
+  const userId = req.userId;
+
+  const content = ContentModel.find({
+    userId : userId
+  })
+
+  res.json({
+    content
+  })
+
 });
 
 app.delete("/api/v1/content" , (req : Request , res : Response) => {
