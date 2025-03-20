@@ -108,13 +108,13 @@ app.post("/api/v1/content" , userMiddleware , async (req  , res)  => {
 
 });
 
-app.get("/api/v1/content" , (req : Request , res : Response) => {
+app.get("/api/v1/content" ,userMiddleware ,async (req : Request , res : Response) => {
   //@ts-ignore 
   const userId = req.userId;
 
-  const content = ContentModel.find({
+  const content = await ContentModel.find({
     userId : userId
-  })
+  }).populate("userId" , "username")
 
   res.json({
     content
@@ -122,8 +122,18 @@ app.get("/api/v1/content" , (req : Request , res : Response) => {
 
 });
 
-app.delete("/api/v1/content" , (req : Request , res : Response) => {
-  res.send("Hello World");
+app.delete("/api/v1/content" , async (req : Request , res : Response) => {
+  const contentId = req.body.contentId;
+
+  await ContentModel.deleteMany({
+    contentId,
+    //@ts-ignore
+    userId : userId
+  })
+
+  res.json({
+    message : "Deleted"
+  })
 });
 
 app.post("/api/v1/brain/share" , (req : Request , res : Response) => {
