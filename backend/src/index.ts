@@ -122,26 +122,58 @@ app.get("/api/v1/content" ,userMiddleware ,async (req : Request , res : Response
 
 });
 
-app.delete("/api/v1/content" , async (req : Request , res : Response) => {
+app.delete("/api/v1/content" ,userMiddleware, async (req : Request , res : Response) => {
+  const contentId = req.body.contentId;
+  //@ts-ignore
+  const userId = req.userId;
+
+  const result = await ContentModel.deleteMany({
+    _id: contentId,
+    userId: userId
+  });
+
+  if (result.deletedCount > 0) {
+    res.json({
+      message: "Deleted"
+    });
+  } else {
+    res.status(404).json({
+      message: "Content not found or not authorized"
+    });
+  }
+});
+
+app.post("/api/v1/brain/share", userMiddleware, async (req: Request, res: Response) => {
   const contentId = req.body.contentId;
 
-  await ContentModel.deleteMany({
-    contentId,
-    //@ts-ignore
-    userId : userId
-  })
+  const content = await ContentModel.findById(contentId);
+  if (!content) {
+     res.status(404).json({
+      message: "Content not found"
+    });
+    return
+  }
+
+   res.json({
+    message: "Content shared",
+    shareLink: `/api/v1/brain/${content?._id}`
+  });
+});
+
+app.get("/api/v1/brain/:shareLink" ,async (req : Request , res : Response) => {
+  const {shareLink} = req.params;
+  const content = await ContentModel.findById(shareLink).populate("userId", "username")
+  if(!content){
+    res.status(404).json({
+      message : "Content not found"
+    })
+    return;
+  }
 
   res.json({
-    message : "Deleted"
+    content
   })
-});
 
-app.post("/api/v1/brain/share" , (req : Request , res : Response) => {
-  res.send("Hello World");
-});
-
-app.get("/api/v1/brain/:shareLink" , (req : Request , res : Response) => {
-  res.send("Hello World");
 });
 
 async function main() {
