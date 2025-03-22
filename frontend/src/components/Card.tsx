@@ -36,7 +36,7 @@ const Card: React.FC<CardProps> = ({ title, content, tags, date, icon, type, lin
 
         {type === 'tweet' && link && (
           <blockquote className="twitter-tweet">
-            <a href={link} target="_blank" rel="noopener noreferrer">View Tweet</a>
+            <a href={link.replace("x.com" , "twitter.com")} target="_blank" rel="noopener noreferrer">View Tweet</a>
           </blockquote>
         )}
 

@@ -1,11 +1,12 @@
 import { ReactElement } from "react"
 
-interface ButtonProps {
+export interface ButtonProps {
     variant : "primary" | "secondary"
     size : "sm" | "md" | "lg"
     text : string
     startIcon? : ReactElement
     endIcon? : ReactElement
+    onClick?: () => void
 }
 
 const variantStyles = {
