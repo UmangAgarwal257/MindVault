@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 
-
 type Variants = "primary" | "secondary"
 
 interface ButtonProps {
@@ -23,14 +22,18 @@ const sizeStyles = {
     "lg" : "py-4 px-6"
 }
 
-const defaultStyles = "rounded-md flex"
+const defaultStyles = "rounded-md flex items-center"
 
 export const Button = (props : ButtonProps) => {
   return (
     <button className={`${variantStyles[props.variant]}
      ${defaultStyles} ${sizeStyles[props.size]}`}>
-        {props.startIcon? <div className="pr-2">{props.startIcon}</div> : null}
-        {props.text} {props.endIcon}</button>
+        {props.startIcon}
+        <div className="pl-2 pr-2">
+        {props.text} 
+        </div>
+        {props.endIcon}
+    </button>
   )
 }
 

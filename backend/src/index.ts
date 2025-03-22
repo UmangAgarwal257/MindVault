@@ -1,11 +1,12 @@
 import express , {Request , Response} from "express"
 import {z} from "zod"
-import { ContentModel, UserModel } from "./db";
+import { ContentModel, LinkModel, UserModel } from "./db";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import mongoose from "mongoose";
 import { userMiddleware } from "./middleware";
+import { random } from "./utils";
 
 dotenv.config({ path: __dirname + "/../.env" });
 const app = express();
@@ -92,11 +93,12 @@ app.post("/api/v1/signin" ,async (req : Request , res : Response) => {
 });
 
 app.post("/api/v1/content" , userMiddleware , async (req  , res)  => {
-  const {link , title } = req.body;
+  const {link , type } = req.body;
 
   await ContentModel.create({
     link,
-    title,
+    title : req.body.title,
+    type,
     //@ts-ignore
     userId : req.userId,
     tags : []
@@ -144,34 +146,72 @@ app.delete("/api/v1/content" ,userMiddleware, async (req : Request , res : Respo
 });
 
 app.post("/api/v1/brain/share", userMiddleware, async (req: Request, res: Response) => {
-  const contentId = req.body.contentId;
+  const {share} = req.body;
+  if(share) {
+    const existingLink = await LinkModel.findOne({
+      //@ts-ignore
+      userId : req.userId
+    })
 
-  const content = await ContentModel.findById(contentId);
-  if (!content) {
-     res.status(404).json({
-      message: "Content not found"
+    if(existingLink){
+      res.json({
+        hash : existingLink.hash
+      })
+      return;
+    }
+
+    try {
+      const hash = random(12);
+      await LinkModel.create({
+        //@ts-ignore
+        userId: req.userId,
+        hash: hash
+      });
+  
+      res.json({
+        message: hash
+      });
+    } catch(error) {
+      res.status(500).json({
+        message: "Error creating share link"
+      });
+    }
+  } else {
+    await LinkModel.deleteOne({
+      //@ts-ignore
+      userId: req.userId
     });
-    return
+    res.json({
+      message: "Removed link"
+    });
   }
-
-   res.json({
-    message: "Content shared",
-    shareLink: `/api/v1/brain/${content?._id}`
-  });
 });
 
-app.get("/api/v1/brain/:shareLink" ,async (req : Request , res : Response) => {
-  const {shareLink} = req.params;
-  const content = await ContentModel.findById(shareLink).populate("userId", "username")
-  if(!content){
+app.get("/api/v1/brain/:hash" ,async (req : Request , res : Response) => {
+  const {hash} = req.params;
+
+  const link = await LinkModel.findOne({
+    hash
+  })
+  
+  if(!link){
     res.status(404).json({
-      message : "Content not found"
+      message : "Incorrect link"
     })
     return;
   }
 
+  const content = await ContentModel.find({
+    userId : link.userId
+  })
+
+  const user = await UserModel.findOne({
+     _id : link.userId
+  })
+
   res.json({
-    content
+    username : user?.username,
+    content : content
   })
 
 });
